@@ -1,32 +1,32 @@
 # named list of all robots
 robots:
-  cf231:
+  cf0000:
     enabled: true
-    uri: radio://0/80/2M/E7E7E7E7E7
+    uri: radio://0/80/2M/E7E7E70000
     initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
-    # firmware_params:
-    #   kalman:
-    #     pNAcc_xy: 1.0 # default 0.5
-    # firmware_logging:
-    #   enabled: true
-    #   custom_topics:
-    #     topic_name3: 
-    #       frequency: 1
-    #       vars: ["acc.x", "acc.y"]
-  cf5:
+
+  cf1111:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E71111
+    initial_position: [1.0, 0.0, 0.0]
+    type: cf21  # see robot_types
+
+
+  cf2222:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E72222
+    initial_position: [2.0, 0.0, 0.0]
+    type: cf21  # see robot_types
+
+
+  cf3333:
     enabled: false
-    uri: radio://0/80/2M/E7E7E7E705
+    uri: radio://0/80/2M/E7E7E73333
     initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
-    # firmware_params:
-    #   kalman:
-    #     pNAcc_xy: 1.0 # default 0.5
-    #firmware_logging:
-    #  custom_topics:
-    #    topic_name3: 
-    #      frequency: 1
-    #      vars: ["acc.x", "acc.y", "acc.z"]
+
+
 # Definition of the various robot types
 robot_types:
   cf21:

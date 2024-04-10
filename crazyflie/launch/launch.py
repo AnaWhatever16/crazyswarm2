@@ -76,8 +76,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
-        DeclareLaunchArgument('rviz', default_value='False'),
-        DeclareLaunchArgument('gui', default_value='True'),
+        DeclareLaunchArgument('rviz', default_value='True'),
+        DeclareLaunchArgument('gui', default_value='False'),
         DeclareLaunchArgument('server_yaml_file', default_value=''),
         DeclareLaunchArgument('teleop_yaml_file', default_value=''),
         DeclareLaunchArgument('mocap_yaml_file', default_value=''),
