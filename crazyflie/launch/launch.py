@@ -81,34 +81,37 @@ def generate_launch_description():
         DeclareLaunchArgument('server_yaml_file', default_value=''),
         DeclareLaunchArgument('teleop_yaml_file', default_value=''),
         DeclareLaunchArgument('mocap_yaml_file', default_value=''),
-        Node(
-            package='motion_capture_tracking',
-            executable='motion_capture_tracking_node',
-            condition=LaunchConfigurationNotEquals('backend','sim'),
-            name='motion_capture_tracking',
-            output='screen',
-            parameters= [PythonExpression(["'tmp_motion_capture.yaml' if '", LaunchConfiguration('mocap_yaml_file'), "' == '' else '", LaunchConfiguration('mocap_yaml_file'), "'"])],
-        ),
-        Node(
-            package='crazyflie',
-            executable='teleop',
-            name='teleop',
-            remappings=[
-                ('emergency', 'all/emergency'),
-                ('takeoff', 'all/takeoff'),
-                ('land', 'all/land'),
-                # uncomment to manually control (and update teleop.yaml)
-                # ('cmd_vel_legacy', 'cf6/cmd_vel_legacy'),
-                # ('cmd_full_state', 'cf6/cmd_full_state'),
-                # ('notify_setpoints_stop', 'cf6/notify_setpoints_stop'),
-            ],
-            parameters= [PythonExpression(["'teleop.yaml' if '", LaunchConfiguration('teleop_yaml_file'), "' == '' else '", LaunchConfiguration('teleop_yaml_file'), "'"])],
-        ),
-        Node(
-            package='joy',
-            executable='joy_node',
-            name='joy_node' # by default id=0
-        ),
+        # Node(
+        #     package='motion_capture_tracking',
+        #     executable='motion_capture_tracking_node',
+        #     condition=LaunchConfigurationNotEquals('backend','sim'),
+        #     name='motion_capture_tracking',
+        #     output='screen',
+        #     parameters= [PythonExpression(["'tmp_motion_capture.yaml' if '", LaunchConfiguration('mocap_yaml_file'), "' == '' else '", LaunchConfiguration('mocap_yaml_file'), "'"])],
+        # ),
+        
+        # Node(
+        #     package='crazyflie',
+        #     executable='teleop',
+        #     name='teleop',
+        #     remappings=[
+        #         ('emergency', 'all/emergency'),
+        #         ('takeoff', 'all/takeoff'),
+        #         ('land', 'all/land'),
+        #         # uncomment to manually control (and update teleop.yaml)
+        #         # ('cmd_vel_legacy', 'cf6/cmd_vel_legacy'),
+        #         # ('cmd_full_state', 'cf6/cmd_full_state'),
+        #         # ('notify_setpoints_stop', 'cf6/notify_setpoints_stop'),
+        #     ],
+        #     parameters= [PythonExpression(["'teleop.yaml' if '", LaunchConfiguration('teleop_yaml_file'), "' == '' else '", LaunchConfiguration('teleop_yaml_file'), "'"])],
+        # ),
+        
+        # Node(
+        #     package='joy',
+        #     executable='joy_node',
+        #     name='joy_node' # by default id=0
+        # ),
+        
         Node(
             package='crazyflie',
             executable='crazyflie_server.py',
@@ -146,14 +149,34 @@ def generate_launch_description():
                 "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
             }]
         ),
+        # Node(
+        #     condition=LaunchConfigurationEquals('gui', 'True'),
+        #     package='crazyflie',
+        #     namespace='',
+        #     executable='gui.py',
+        #     name='gui',
+        #     parameters=[{
+        #         "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+        #     }]
+        # ),
+
         Node(
-            condition=LaunchConfigurationEquals('gui', 'True'),
-            package='crazyflie',
-            namespace='',
-            executable='gui.py',
-            name='gui',
-            parameters=[{
-                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
-            }]
+            package = 'crazyflie',
+            executable = 'Polygon_publisher.py',
+            name = 'Polygon_publisher',
+            output='screen',
+
         ),
-    ])
+        Node(
+            package = 'crazyflie',
+            executable = 'Target_executor.py',
+            name = 'Target_executor',
+            output='screen',
+        ),
+        Node(
+            package = 'crazyflie',
+            executable = 'Algorithm.py',
+            name = 'Algorithm',
+            output='screen',
+        ),
+    ])    
