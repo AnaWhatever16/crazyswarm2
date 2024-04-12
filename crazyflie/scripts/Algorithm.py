@@ -21,7 +21,7 @@ class Algorithm(Node):
 
     def polygon_callback(self, msg):
         points = [[i.x,i.y] for i in msg.polygon.points]
-        print(points)
+        #print(points)
         target_msg = PoseArray()
         target_msg.header.frame_id = 'world'
         for point in points:
@@ -33,6 +33,7 @@ class Algorithm(Node):
             target_msg.poses[-1].orientation.y = 0.0
             target_msg.poses[-1].orientation.z = 0.0
             target_msg.poses[-1].orientation.w = 1.0
+        self.target_publisher.publish(target_msg)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -172,6 +172,9 @@ def generate_launch_description():
             executable = 'Target_executor.py',
             name = 'Target_executor',
             output='screen',
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }]
         ),
         Node(
             package = 'crazyflie',

@@ -21,12 +21,14 @@
 # if __name__ == '__main__':
 #     main()
 
+#!/usr/bin/env python3
 
 """Takeoff-hover-land for one CF. Useful to validate hardware config."""
 
 from crazyflie_py import Crazyswarm
 import numpy as np
 from math import cos, sin, pi
+
 
 TAKEOFF_DURATION = 1.0
 HOVER_DURATION = 1.0
