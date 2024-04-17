@@ -182,4 +182,10 @@ def generate_launch_description():
             name = 'Algorithm',
             output='screen',
         ),
+        Node(
+            package='crazyflie',
+            executable='read_positions_from_vrpn.py',
+            condition=LaunchConfigurationNotEquals('backend','sim'),
+            name='read_positions_from_vrpn',
+        ),
     ])    

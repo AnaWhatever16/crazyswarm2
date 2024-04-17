@@ -115,6 +115,7 @@ install(PROGRAMS
   scripts/Polygon_publisher.py
   scripts/Algorithm.py
   scripts/Target_executor.py
+  scripts/read_positions_from_vrpn.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

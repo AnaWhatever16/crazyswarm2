@@ -1,20 +1,7 @@
-#!/usr/bin/env python3
-
-
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
-from geometry_msgs.msg import PolygonStamped, PoseArray, Pose
-from tf2_msgs.msg import TFMessage
-import numpy as np
-
-import time
-
 from numpy import *
 import matplotlib.pyplot as plt
+import numpy as np
 
-
-R = 0.4
 def is_pos_def(x):
     return np.all(np.linalg.eigvals(x) >= 0)
 
@@ -280,10 +267,10 @@ class Graph():
                     
         return H/2
 
-def plot(x, polygon):
+def plot(x):
     global iii  # Add this line to access the global variable iii
     graph = Graph()
-    graph.polygon(array(polygon))
+    graph.polygon(array([[-1,-1],[-1,1],[1,1],[1,-1]])+1)
     positions = np.reshape(x, (-1,2))
 
     for position in positions:
@@ -297,74 +284,11 @@ def function(x, polygon):
     graph = Graph()
     graph.polygon(array(polygon))
     positions = np.reshape(x, (-1,2))
+
     for position in positions:
         graph.circles.append(Circle(position, R))
         
     graph.compute_gradients()
     #graph.plot_positions()
     return graph.integral(), graph.graph_gradient(), graph.graph_hessian()
-
-
-class Algorithm(Node):
-    def __init__(self):
-        self.polygon = [[1,1],[-1,1],[-1,-1],[1,-1]]
-        self.poses = [1,1,-1,1,-1,-1,1,-1]
-        super().__init__('algorithm')
-        self.polygon_subscriber = self.create_subscription(
-            PolygonStamped,
-            'polygon_ver',
-            self.polygon_callback,
-            10)
-        self.pose_subscriber = self.create_subscription(
-            TFMessage,
-            'tf',
-            self.polygon_callback,
-            10)
-        self.target_publisher = self.create_publisher(PoseArray, 'target', 10)
-        
-    def pose_callback(self, msg):
-        for transformStamped in msg.transforms:
-            print(transformStamped.transform.translation)
     
-    def polygon_callback(self, msg):
-        if(type(msg) == PolygonStamped):
-            self.polygon = [[i.x,i.y] for i in msg.polygon.points]
-        else:
-            self.poses = np.array([[i.transform.translation.x, i.transform.translation.y] for i in msg.transforms])
-        
-        F,G,H = function(self.poses, list(reversed(self.polygon)))
-        G = G.reshape((-1,2))
-        for i,g in enumerate(G):
-            if(linalg.norm(g) !=0):
-                G[i] = g/linalg.norm(5*g)*min(0.5,linalg.norm(5*g))
-        #print(F, G)
-        
-        #plot(self.poses, list(reversed(self.polygon)))
-        
-        points = np.array(self.poses).reshape((-1,2)) + G
-        #print(points)
-        target_msg = PoseArray()
-        target_msg.header.frame_id = 'world'
-        for point in points:
-            target_msg.poses.append(Pose())
-            target_msg.poses[-1].position.x = float(point[0])
-            target_msg.poses[-1].position.y = float(point[1])
-            target_msg.poses[-1].position.z = 1.0
-            target_msg.poses[-1].orientation.x = 0.0
-            target_msg.poses[-1].orientation.y = 0.0
-            target_msg.poses[-1].orientation.z = 0.0
-            target_msg.poses[-1].orientation.w = 1.0
-        self.target_publisher.publish(target_msg)
-
-def main(args=None):
-    rclpy.init(args=args)
-
-    algorithm = Algorithm()
-
-    rclpy.spin(algorithm)
-
-    algorithm.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()

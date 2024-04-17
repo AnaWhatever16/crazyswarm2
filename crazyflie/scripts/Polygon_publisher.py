@@ -24,7 +24,7 @@ class Polygon_publisher(Node):
         M,N = 1000,1000
         ecran = pygame.display.set_mode((M, N))
         font = pygame.font.SysFont(None, 20)  # Create a font object for displaying text
-        points = [(100, 100), (100, -100), (-100, -100), (-100, 100)]
+        points = [(100, -100), (-100, -100), (-100, 100), (100, 100)] #[[1,1],[-1,1],[-1,-1],[1,-1]]
         for i in range(len(points)):
             points[i] = (points[i][0] + M//2, points[i][1] + N//2)
         couleur_polygone = (0, 255, 0, 128)

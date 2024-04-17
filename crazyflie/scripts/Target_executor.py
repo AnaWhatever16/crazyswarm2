@@ -12,8 +12,8 @@ class Target_executor(Node):
         self.timeHelper = self.swarm.timeHelper
         super().__init__('target_executor')
         self.get_logger().info('heeeeeeelp1')
-        self.swarm.allcfs.takeoff(targetHeight=1.0, duration=1.0)
-        self.timeHelper.sleep(2.0)
+        # self.swarm.allcfs.takeoff(targetHeight=1.0, duration=1.0)
+        # self.timeHelper.sleep(2.0)
     
         # Création d'un abonné pour écouter les positions
         self.target_sub = self.create_subscription(
@@ -24,8 +24,8 @@ class Target_executor(Node):
 
     def position_callback(self, msg):
         positions = [[i.position.x, i.position.y, i.position.z] for i in msg.poses]
-        for i, cf in enumerate(self.swarm.allcfs.crazyflies):
-            self.position(cf, positions[i])
+        # for i, cf in enumerate(self.swarm.allcfs.crazyflies):
+        #     self.position(cf, positions[i])
 
     def position(self, cf, pos):
         vel = [0.0, 0.0, 0.0]
