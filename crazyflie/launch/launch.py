@@ -89,7 +89,7 @@ def generate_launch_description():
         #     output='screen',
         #     parameters= [PythonExpression(["'tmp_motion_capture.yaml' if '", LaunchConfiguration('mocap_yaml_file'), "' == '' else '", LaunchConfiguration('mocap_yaml_file'), "'"])],
         # ),
-        
+
         # Node(
         #     package='crazyflie',
         #     executable='teleop',
@@ -105,13 +105,13 @@ def generate_launch_description():
         #     ],
         #     parameters= [PythonExpression(["'teleop.yaml' if '", LaunchConfiguration('teleop_yaml_file'), "' == '' else '", LaunchConfiguration('teleop_yaml_file'), "'"])],
         # ),
-        
+
         # Node(
         #     package='joy',
         #     executable='joy_node',
         #     name='joy_node' # by default id=0
         # ),
-        
+
         Node(
             package='crazyflie',
             executable='crazyflie_server.py',
@@ -167,15 +167,15 @@ def generate_launch_description():
             output='screen',
 
         ),
-        Node(
-            package = 'crazyflie',
-            executable = 'Target_executor.py',
-            name = 'Target_executor',
-            output='screen',
-            parameters=[{
-                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
-            }]
-        ),
+        # Node(
+        #     package = 'crazyflie',
+        #     executable = 'Target_executor.py',
+        #     name = 'Target_executor',
+        #     output='screen',
+        #     parameters=[{
+        #         "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+        #     }]
+        # ),
         Node(
             package = 'crazyflie',
             executable = 'Algorithm.py',
@@ -188,4 +188,4 @@ def generate_launch_description():
             condition=LaunchConfigurationNotEquals('backend','sim'),
             name='read_positions_from_vrpn',
         ),
-    ])    
+    ])

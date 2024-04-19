@@ -2,19 +2,19 @@
 robots:
   cf0000:
     enabled: true
-    uri: radio://0/80/2M/E7E7E70000
+    uri: radio://0/80/2M/E7E7E7E701
     initial_position: [1.0, 1.0, 0.0]
     type: cf21  # see robot_types
 
   cf1111:
-    enabled: true
+    enabled: false
     uri: radio://0/80/2M/E7E7E71111
     initial_position: [-1.0, 1.0, 0.0]
     type: cf21  # see robot_types
 
 
   cf2222:
-    enabled: false
+    enabled: true
     uri: radio://0/80/2M/E7E7E72222
     initial_position: [-1.0, -1.0, 0.0]
     type: cf21  # see robot_types
@@ -40,7 +40,7 @@ robot_types:
     motion_capture:
       enabled: true
       # only if enabled; see motion_capture.yaml
-      marker: default_single_marker
+      marker: big_frame
       dynamics: default
     big_quad: false
     battery:
@@ -61,7 +61,7 @@ robot_types:
 
   cf21_mocap_deck:
     motion_capture:
-      enabled: true
+      enabled: false
       # only if enabled; see motion_capture.yaml
       marker: mocap_deck
       dynamics: default

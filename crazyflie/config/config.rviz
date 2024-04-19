@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Polygon1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz_common/Selection
@@ -52,19 +53,13 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        cf231:
-          Value: true
-        world:
-          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          cf231:
-            {}
+        {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -85,11 +80,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        cf231:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -98,6 +88,19 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Class: rviz_default_plugins/Polygon
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Polygon
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /polygon_ver
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -180,5 +183,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 74
-  Y: 60
+  X: 103
+  Y: 134

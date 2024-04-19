@@ -11,9 +11,11 @@ class Target_executor(Node):
         self.swarm = Crazyswarm()
         self.timeHelper = self.swarm.timeHelper
         super().__init__('target_executor')
-        self.get_logger().info('heeeeeeelp1')
-        # self.swarm.allcfs.takeoff(targetHeight=1.0, duration=1.0)
-        # self.timeHelper.sleep(2.0)
+        self.timeHelper.sleep(1.0)
+        self.swarm.allcfs.crazyflies[0].takeoff(targetHeight=1.0, duration=4.0)
+        self.timeHelper.sleep(3.0)
+        self.swarm.allcfs.crazyflies[0].land(targetHeight=0.04, duration=4.0)
+        self.timeHelper.sleep(3.0)
     
         # Création d'un abonné pour écouter les positions
         self.target_sub = self.create_subscription(
