@@ -167,21 +167,21 @@ def generate_launch_description():
             output='screen',
 
         ),
-        # Node(
-        #     package = 'crazyflie',
-        #     executable = 'Target_executor.py',
-        #     name = 'Target_executor',
-        #     output='screen',
-        #     parameters=[{
-        #         "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
-        #     }]
-        # ),
         Node(
             package = 'crazyflie',
-            executable = 'Algorithm.py',
-            name = 'Algorithm',
+            executable = 'Target_executor.py',
+            name = 'Target_executor',
             output='screen',
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }]
         ),
+        # Node(
+        #     package = 'crazyflie',
+        #     executable = 'Algorithm.py',
+        #     name = 'Algorithm',
+        #     output='screen',
+        # ),
         Node(
             package='crazyflie',
             executable='read_positions_from_vrpn.py',

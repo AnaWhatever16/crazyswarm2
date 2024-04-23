@@ -14,7 +14,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 
 
-R = 0.4
+R = 1.0
 def is_pos_def(x):
     return np.all(np.linalg.eigvals(x) >= 0)
 
@@ -321,10 +321,6 @@ class Algorithm(Node):
             self.polygon_callback,
             10)
         self.target_publisher = self.create_publisher(PoseArray, 'target', 10)
-        
-    def pose_callback(self, msg):
-        for transformStamped in msg.transforms:
-            print(transformStamped.transform.translation)
     
     def polygon_callback(self, msg):
         if(type(msg) == PolygonStamped):
@@ -337,11 +333,11 @@ class Algorithm(Node):
         for i,g in enumerate(G):
             if(linalg.norm(g) !=0):
                 G[i] = g/linalg.norm(5*g)*min(0.5,linalg.norm(5*g))
-        #print(F, G)
+        print(F, G)
         
         #plot(self.poses, list(reversed(self.polygon)))
         
-        points = np.array(self.poses).reshape((-1,2)) + G
+        points = np.array(self.poses).reshape((-1,2)) + G/3
         #print(points)
         target_msg = PoseArray()
         target_msg.header.frame_id = 'world'
