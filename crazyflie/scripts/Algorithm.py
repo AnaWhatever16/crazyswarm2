@@ -7,12 +7,23 @@ from std_msgs.msg import String
 from geometry_msgs.msg import PolygonStamped, PoseArray, Pose
 from tf2_msgs.msg import TFMessage
 import numpy as np
+from crazyflie_interfaces.msg import FullStateArray, FullState
 
 import time
 
 from numpy import *
 import matplotlib.pyplot as plt
 
+amorti = True
+
+Time = []
+Func = []
+x = []
+y = []
+dx = []
+dy = []
+Cx = []
+Cy = []
 
 R = 1.0
 def is_pos_def(x):
@@ -307,8 +318,13 @@ def function(x, polygon):
 
 class Algorithm(Node):
     def __init__(self):
-        self.polygon = [[1,1],[-1,1],[-1,-1],[1,-1]]
-        self.poses = [1,1,-1,1,-1,-1,1,-1]
+        self.polygon = np.array([[1,1],[-1,1],[-1,-1],[1,-1]])*0.9
+        self.poses = []
+        self.oldposes = self.poses
+        self.oldtime = 0.0
+        
+        self.velocities = []
+        
         super().__init__('algorithm')
         self.polygon_subscriber = self.create_subscription(
             PolygonStamped,
@@ -318,49 +334,104 @@ class Algorithm(Node):
         self.pose_subscriber = self.create_subscription(
             TFMessage,
             'tf',
-            self.polygon_callback,
+            self.pose_callback,
             10)
-        self.target_publisher = self.create_publisher(PoseArray, 'target', 10)
+        self.target_publisher = self.create_publisher(FullStateArray, 'target', 10)
+        self.timer = self.create_timer(0.01, self.send_cmd)
     
     def polygon_callback(self, msg):
-        if(type(msg) == PolygonStamped):
-            self.polygon = [[i.x,i.y] for i in msg.polygon.points]
-        else:
-            self.poses = np.array([[i.transform.translation.x, i.transform.translation.y] for i in msg.transforms])
+        self.polygon = [[i.x,i.y] for i in msg.polygon.points]
+        
+    def pose_callback(self, msg):
+        self.poses = np.array([[i.transform.translation.x, i.transform.translation.y] for i in msg.transforms])
+        t = msg.transforms[0].header.stamp.sec + msg.transforms[0].header.stamp.nanosec*1e-9
+        if(len(self.oldposes) != 0):
+            self.velocities = (self.poses - self.oldposes)/(t-self.oldtime)
+        self.oldtime = t
+        self.oldposes = self.poses
+    
+    def send_cmd(self):
+        if(len(self.polygon) == 0 or len(self.velocities) == 0 or len(self.poses) == 0):
+            print('cannot start algorithm if no polygon, poses or velocities are present')
+            return
         
         F,G,H = function(self.poses, list(reversed(self.polygon)))
+        if(True or self.get_clock().now().nanoseconds*1e-9 < 10.0):
+            Func.append(F)
+            Time.append(self.get_clock().now().nanoseconds*1e-9)
+            x.append(self.poses[0][0])
+            y.append(self.poses[0][1])
+            dx.append(self.velocities[0][0])
+            dy.append(self.velocities[0][1])
+            Cx.append(G[0])
+            Cy.append(G[1])
+            
+        G *= 0.2
+        H *= 0.2
         G = G.reshape((-1,2))
-        for i,g in enumerate(G):
-            if(linalg.norm(g) !=0):
-                G[i] = g/linalg.norm(5*g)*min(0.5,linalg.norm(5*g))
-        print(F, G)
+        # for i,g in enumerate(G):
+        #     if(linalg.norm(g) !=0):
+        #         G[i] = g/linalg.norm(g)*min(1,linalg.norm(g))
         
-        #plot(self.poses, list(reversed(self.polygon)))
+        points = np.array(self.poses).reshape((-1,2))
+        speeds = G
+        print("iteration")
+        print("\t", np.round(self.velocities.reshape(-1),3))
+        print("\t", np.round(G.reshape(-1),3))
+        acc = -H@(self.velocities.reshape(-1))
+        acc = acc.reshape((-1,2))
         
-        points = np.array(self.poses).reshape((-1,2)) + G/3
-        #print(points)
-        target_msg = PoseArray()
-        target_msg.header.frame_id = 'world'
-        for point in points:
-            target_msg.poses.append(Pose())
-            target_msg.poses[-1].position.x = float(point[0])
-            target_msg.poses[-1].position.y = float(point[1])
-            target_msg.poses[-1].position.z = 1.0
-            target_msg.poses[-1].orientation.x = 0.0
-            target_msg.poses[-1].orientation.y = 0.0
-            target_msg.poses[-1].orientation.z = 0.0
-            target_msg.poses[-1].orientation.w = 1.0
+        target_msg = FullStateArray()
+        for i in range(len(points)):
+            point = points[i]
+            speed = speeds[i]
+            acceleration = acc[i]
+            
+            target_msg.fullstates.append(FullState())
+            
+            target_msg.fullstates[-1].pose.position.x = float(point[0])
+            target_msg.fullstates[-1].pose.position.y = float(point[1])
+            target_msg.fullstates[-1].pose.position.z = 1.0
+            
+            target_msg.fullstates[-1].twist.linear.x = float(speed[0])
+            target_msg.fullstates[-1].twist.linear.y = float(speed[1])
+            target_msg.fullstates[-1].twist.linear.z = 0.0
+            
+            target_msg.fullstates[-1].acc.x = acceleration[0] if amorti else 0.0
+            target_msg.fullstates[-1].acc.y = acceleration[1] if amorti else 0.0
+            target_msg.fullstates[-1].acc.z = 0.0
+            
         self.target_publisher.publish(target_msg)
+            
+        # target_msg = PoseArray()
+        # target_msg.header.frame_id = 'world'
+        # for i in range(len(points)):
+        #     point = points[i]
+        #     speed = speeds[i]
+        #     target_msg.poses.append(Pose())
+        #     target_msg.poses[-1].position.x = float(point[0])
+        #     target_msg.poses[-1].position.y = float(point[1])
+        #     target_msg.poses[-1].position.z = 1.0
+        #     target_msg.poses[-1].orientation.x = speed[0]
+        #     target_msg.poses[-1].orientation.y = speed[1]
+        #     target_msg.poses[-1].orientation.z = 0.0
+        #     target_msg.poses[-1].orientation.w = 1.0
+        # self.target_publisher.publish(target_msg)
 
 def main(args=None):
-    rclpy.init(args=args)
+    try:
+        rclpy.init(args=args)
 
-    algorithm = Algorithm()
+        algorithm = Algorithm()
 
-    rclpy.spin(algorithm)
+        rclpy.spin(algorithm)
 
-    algorithm.destroy_node()
-    rclpy.shutdown()
-
+        algorithm.destroy_node()
+        rclpy.shutdown()
+    except KeyboardInterrupt:
+        plt.plot(Time, Func)
+        plt.savefig("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/scripts/function.pdf")
+        np.savetxt("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/scripts/"+('' if amorti else 'non_')+"amorti.txt",array([Time, Func,x,y,dx,dy, Cx, Cy]).T)
+    
 if __name__ == '__main__':
     main()

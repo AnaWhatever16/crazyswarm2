@@ -31,7 +31,7 @@ class Polygon_publisher(Node):
         self.M,self.N = 1000,1000
         self.ecran = pygame.display.set_mode((self.M, self.N))
         self.font = pygame.font.SysFont(None, 20)  # Create a font object for displaying text
-        self.points = [(100, -100), (-100, -100), (-100, 100), (100, 100)] #[[1,1],[-1,1],[-1,-1],[1,-1]]
+        self.points = [(90, -90), (-90, -90), (-90, 90), (90, 90)] #[[1,1],[-1,1],[-1,-1],[1,-1]]
         for i in range(len(self.points)):
             self.points[i] = (self.points[i][0] + self.M//2, self.points[i][1] + self.N//2)
         self.couleur_polygone = (0, 255, 0, 128)
@@ -39,6 +39,7 @@ class Polygon_publisher(Node):
         self.rayon_selection = 10
         self.point_selectionne = None
         self.polygone_selectionne = False
+        self.i = 0
 
     
     def polygon_window(self):
@@ -74,17 +75,15 @@ class Polygon_publisher(Node):
 
             self.ecran.fill((255, 255, 255))
 
-            for x in range(0, self.M, 100):  # Lignes verticales
-                pygame.draw.line(self.ecran, (200, 200, 200), (x, 0), (x, self.N))
-            for y in range(0, self.N, 100):  # Lignes horizontales
-                pygame.draw.line(self.ecran, (200, 200, 200), (0, y), (self.M, y))
+                
 
             # Dessiner les axes x et y
             pygame.draw.line(self.ecran, (255, 0, 0), (0, self.N//2), (self.M, self.N//2), 2)  # Axe x (rouge)
             pygame.draw.line(self.ecran, (0, 0, 255), (self.M/2, 0), (self.M//2, self.N), 2)  # Axe y (bleu)
+            
             for pose in self.poses:
                 pygame.draw.circle(self.ecran, (0, 0, 255), (pose.transform.translation.x*100 + self.M//2,-pose.transform.translation.y*100+self.N//2), 100)
-
+            
             pygame.draw.polygon(self.ecran, self.couleur_polygone, self.points, width = 10)
 
             for i, point in enumerate(self.points):
@@ -99,13 +98,19 @@ class Polygon_publisher(Node):
                 coord_text = self.font.render(f"({(point[0]-self.M//2)/100}, {(point[1]-self.N//2)/100})", True, (0, 0, 0))  # Black text
                 text_rect = coord_text.get_rect(center=point)  # Center the text next to the point
                 self.ecran.blit(coord_text, text_rect)
-                
+            for x in range(0, self.M, 100):  # Lignes verticales
+                pygame.draw.line(self.ecran, (200, 200, 200), (x, 0), (x, self.N))
+            for y in range(0, self.N, 100):  # Lignes horizontales
+                pygame.draw.line(self.ecran, (200, 200, 200), (0, y), (self.M, y))
+    
+        
             pygame.display.update()
         
     
     def positions_update(self, msg):
         self.poses = msg.transforms
         self.polygon_window()
+        self.i += 1
     
     def send_message(self, data):
         polygon = Polygon()

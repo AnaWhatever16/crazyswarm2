@@ -165,7 +165,9 @@ def generate_launch_description():
             executable = 'Polygon_publisher.py',
             name = 'Polygon_publisher',
             output='screen',
-
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }]
         ),
         Node(
             package = 'crazyflie',
@@ -176,12 +178,15 @@ def generate_launch_description():
                 "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
             }]
         ),
-        # Node(
-        #     package = 'crazyflie',
-        #     executable = 'Algorithm.py',
-        #     name = 'Algorithm',
-        #     output='screen',
-        # ),
+        Node(
+            package = 'crazyflie',
+            executable = 'Algorithm.py',
+            name = 'Algorithm',
+            output='screen',
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }]
+        ),
         Node(
             package='crazyflie',
             executable='read_positions_from_vrpn.py',
