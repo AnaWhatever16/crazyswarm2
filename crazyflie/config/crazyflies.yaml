@@ -81,18 +81,14 @@ all:
   firmware_logging:
     enabled: true
     default_topics:
-     # remove to disable default topic
       pose:
         frequency: 10 # Hz
       status:
         frequency: 1 # Hz
-    #custom_topics:
-    #  topic_name1:
-    #    frequency: 10 # Hz
-    #    vars: ["stateEstimateZ.x", "stateEstimateZ.y", "stateEstimateZ.z", "pm.vbat"]
-    #  topic_name2:
-    #    frequency: 1 # Hz
-    #    vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw"]
+    custom_topics:
+      speed:
+        frequency: 100 # Hz
+        vars: ["stateEstimateZ.x", "stateEstimateZ.y", "stateEstimateZ.vx", "stateEstimateZ.vy","stateEstimateZ.ax", "stateEstimateZ.ay"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:

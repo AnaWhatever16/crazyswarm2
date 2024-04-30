@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -13,7 +12,7 @@ import time
 
 from numpy import *
 import matplotlib.pyplot as plt
-
+import os
 amorti = True
 
 Time = []
@@ -24,6 +23,10 @@ dx = []
 dy = []
 Cx = []
 Cy = []
+goalposex = []
+goalposey = []
+ax = []
+ay = []
 
 R = 1.0
 def is_pos_def(x):
@@ -324,6 +327,10 @@ class Algorithm(Node):
         self.oldtime = 0.0
         
         self.velocities = []
+        self.oldvelocities = self.velocities
+        
+        self.accelerations = np.zeros(10)
+        self.acceleration_index = 0
         
         super().__init__('algorithm')
         self.polygon_subscriber = self.create_subscription(
@@ -347,8 +354,15 @@ class Algorithm(Node):
         t = msg.transforms[0].header.stamp.sec + msg.transforms[0].header.stamp.nanosec*1e-9
         if(len(self.oldposes) != 0):
             self.velocities = (self.poses - self.oldposes)/(t-self.oldtime)
+        if(len(self.oldvelocities) != 0):
+            self.accelerations[self.acceleration_index] = (self.velocities - self.oldvelocities)/(t-self.oldtime)
+            self.acceleration_index = (self.acceleration_index + 1)%10
+        else:
+            self.accelerations= np.zeros((10,len(self.poses),2))
+        self.oldvelocities = self.velocities
         self.oldtime = t
         self.oldposes = self.poses
+        print(np.mean(self.accelerations, axis=0))
     
     def send_cmd(self):
         if(len(self.polygon) == 0 or len(self.velocities) == 0 or len(self.poses) == 0):
@@ -356,7 +370,9 @@ class Algorithm(Node):
             return
         
         F,G,H = function(self.poses, list(reversed(self.polygon)))
-        if(True or self.get_clock().now().nanoseconds*1e-9 < 10.0):
+        G *= 0.5
+        H *= 0.5
+        if(len(self.accelerations) != 0):
             Func.append(F)
             Time.append(self.get_clock().now().nanoseconds*1e-9)
             x.append(self.poses[0][0])
@@ -365,19 +381,15 @@ class Algorithm(Node):
             dy.append(self.velocities[0][1])
             Cx.append(G[0])
             Cy.append(G[1])
+            goalposex.append(self.polygon[0][0]-0.9)
+            goalposey.append(self.polygon[0][1]-0.9)
+            ax.append(np.mean(self.accelerations, axis=0)[0][0])
+            ay.append(np.mean(self.accelerations, axis=0)[0][1])
             
-        G *= 0.2
-        H *= 0.2
         G = G.reshape((-1,2))
-        # for i,g in enumerate(G):
-        #     if(linalg.norm(g) !=0):
-        #         G[i] = g/linalg.norm(g)*min(1,linalg.norm(g))
         
         points = np.array(self.poses).reshape((-1,2))
         speeds = G
-        print("iteration")
-        print("\t", np.round(self.velocities.reshape(-1),3))
-        print("\t", np.round(G.reshape(-1),3))
         acc = -H@(self.velocities.reshape(-1))
         acc = acc.reshape((-1,2))
         
@@ -389,34 +401,20 @@ class Algorithm(Node):
             
             target_msg.fullstates.append(FullState())
             
-            target_msg.fullstates[-1].pose.position.x = float(point[0])
-            target_msg.fullstates[-1].pose.position.y = float(point[1])
             target_msg.fullstates[-1].pose.position.z = 1.0
             
-            target_msg.fullstates[-1].twist.linear.x = float(speed[0])
-            target_msg.fullstates[-1].twist.linear.y = float(speed[1])
             target_msg.fullstates[-1].twist.linear.z = 0.0
-            
-            target_msg.fullstates[-1].acc.x = acceleration[0] if amorti else 0.0
-            target_msg.fullstates[-1].acc.y = acceleration[1] if amorti else 0.0
+            speed = [1.0,0.0]
+            Gain = 0.72
+            kp = 1.94 ; kd = 0.0
+            kp = 1.78
+            # kp = 10/0.72; kd = 0.2*kp
+            print("\t\t",np.mean(self.accelerations,axis = 0)[i][0])
+            target_msg.fullstates[-1].acc.x = kp*(speed[0] - self.velocities[i][0]) #float(acceleration[0]/Gain +  kp*(speed[0] - self.velocities[i][0])) # acceleration[0] if amorti else 0.0
+            target_msg.fullstates[-1].acc.y = kp*(speed[1] - self.velocities[i][1])#acceleration[1]/Gain +  kp*(speed[1] - self.velocities[i][1]) # acceleration[1] if amorti else 0.0
             target_msg.fullstates[-1].acc.z = 0.0
             
         self.target_publisher.publish(target_msg)
-            
-        # target_msg = PoseArray()
-        # target_msg.header.frame_id = 'world'
-        # for i in range(len(points)):
-        #     point = points[i]
-        #     speed = speeds[i]
-        #     target_msg.poses.append(Pose())
-        #     target_msg.poses[-1].position.x = float(point[0])
-        #     target_msg.poses[-1].position.y = float(point[1])
-        #     target_msg.poses[-1].position.z = 1.0
-        #     target_msg.poses[-1].orientation.x = speed[0]
-        #     target_msg.poses[-1].orientation.y = speed[1]
-        #     target_msg.poses[-1].orientation.z = 0.0
-        #     target_msg.poses[-1].orientation.w = 1.0
-        # self.target_publisher.publish(target_msg)
 
 def main(args=None):
     try:
@@ -428,10 +426,12 @@ def main(args=None):
 
         algorithm.destroy_node()
         rclpy.shutdown()
-    except KeyboardInterrupt:
-        plt.plot(Time, Func)
-        plt.savefig("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/scripts/function.pdf")
-        np.savetxt("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/scripts/"+('' if amorti else 'non_')+"amorti.txt",array([Time, Func,x,y,dx,dy, Cx, Cy]).T)
+    except KeyboardInterrupt:        
+        TIME = time.localtime()
+        TIME = str(TIME.tm_year) + "_" + str(TIME.tm_mon) + "_" + str(TIME.tm_mday) + "_" + str(TIME.tm_hour) + "h" + str(TIME.tm_min) + "m" + str(TIME.tm_sec) + "s"
+        path = os.path.join("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results", TIME) 
+        os.mkdir(path)
+        np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay]).T)
     
 if __name__ == '__main__':
     main()
