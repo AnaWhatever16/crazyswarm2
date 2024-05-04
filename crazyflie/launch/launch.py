@@ -195,4 +195,14 @@ def generate_launch_description():
             condition=LaunchConfigurationNotEquals('backend','sim'),
             name='read_positions_from_vrpn',
         ),
+        Node(
+            package = 'crazyflie',
+            executable = 'logging_for_sim.py',
+            name = 'Logging_for_sim',
+            output='screen',
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }],
+            condition=LaunchConfigurationEquals('backend', 'sim')
+        ),
     ])

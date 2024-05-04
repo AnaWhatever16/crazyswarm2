@@ -116,6 +116,7 @@ install(PROGRAMS
   scripts/Algorithm.py
   scripts/Target_executor.py
   scripts/read_positions_from_vrpn.py
+  scripts/logging_for_sim.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

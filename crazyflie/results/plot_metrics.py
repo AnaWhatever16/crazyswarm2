@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-folder_name = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_4_29_23h44m42s'
+folder_name = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_4_11h59m16s'
 
 amorti = np.loadtxt(folder_name + '/amorti.txt').T
 
@@ -50,8 +50,8 @@ plt.savefig(folder_name + "/position.pdf")
 # First create some toy data:
 dx_am = amorti[6]
 dy_am = amorti[7]
-Cx_am = amorti[8]*0.5
-Cy_am = amorti[9]*0.5
+Cx_am = amorti[8]
+Cy_am = amorti[9]
 
 
 f, (ax1, ax2) = plt.subplots(1, 2, sharey=False)

@@ -31,12 +31,12 @@ class Polygon_publisher(Node):
         self.M,self.N = 1000,1000
         self.ecran = pygame.display.set_mode((self.M, self.N))
         self.font = pygame.font.SysFont(None, 20)  # Create a font object for displaying text
-        self.points = [(90, -90), (-90, -90), (-90, 90), (90, 90)] #[[1,1],[-1,1],[-1,-1],[1,-1]]
+        self.points = np.array([[90, -90], [-90, -90], [-90, 90], [90, 90]])*2 #[[1,1],[-1,1],[-1,-1],[1,-1]]
         for i in range(len(self.points)):
             self.points[i] = (self.points[i][0] + self.M//2, self.points[i][1] + self.N//2)
         self.couleur_polygone = (0, 255, 0, 128)
         self.couleur_selection = (255, 0, 0)
-        self.rayon_selection = 10
+        self.rayon_selection = 5
         self.point_selectionne = None
         self.polygone_selectionne = False
         self.i = 0

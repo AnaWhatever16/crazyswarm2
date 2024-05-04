@@ -3,13 +3,13 @@ robots:
   cf0000:
     enabled: true
     uri: radio://0/80/2M/E7E7E70000
-    initial_position: [1.0, 1.0, 0.0]
+    initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
 
   cf1111:
-    enabled: false
+    enabled: true
     uri: radio://0/80/2M/E7E7E71111
-    initial_position: [0.0, 0.0, 0.0]
+    initial_position: [1.0, 1.0, 0.0]
     type: cf21  # see robot_types
 
 
@@ -30,7 +30,38 @@ robots:
   cf4444:
     enabled: false
     uri: radio://0/80/2M/E7E7E74444
-    initial_position: [1.0, -1.0, 0.0]
+    initial_position: [1.0, -1.5, 0.0]
+    type: cf21  # see robot_types
+
+
+  cf5555:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E75555
+    initial_position: [-1.5, 1.5, 0.0]
+    type: cf21  # see robot_types
+
+  cf6666:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E76666
+    initial_position: [0.5, -0.5, 0.0]
+    type: cf21  # see robot_types
+
+  cf7777:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E77777
+    initial_position: [-0.5, 0.5, 0.0]
+    type: cf21  # see robot_types
+
+  cf8888:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E78888
+    initial_position: [1.5, -1.5, 0.0]
+    type: cf21  # see robot_types
+
+  cf9999:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E79999
+    initial_position: [-1.5, -1.5, 0.0]
     type: cf21  # see robot_types
 
 
@@ -42,7 +73,7 @@ robot_types:
       # only if enabled; see motion_capture.yaml
       marker: big_frame
       dynamics: default
-    big_quad: false
+    big_quad: true
     battery:
       voltage_warning: 3.8  # V
       voltage_critical: 3.7 # V
@@ -86,7 +117,7 @@ all:
       status:
         frequency: 1 # Hz
     custom_topics:
-      speed:
+      posVelAcc:
         frequency: 100 # Hz
         vars: ["stateEstimateZ.x", "stateEstimateZ.y", "stateEstimateZ.vx", "stateEstimateZ.vy","stateEstimateZ.ax", "stateEstimateZ.ay"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
