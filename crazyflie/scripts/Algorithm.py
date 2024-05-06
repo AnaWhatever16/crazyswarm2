@@ -6,14 +6,17 @@ from std_msgs.msg import String
 from geometry_msgs.msg import PolygonStamped, PoseArray, Pose
 from tf2_msgs.msg import TFMessage
 import numpy as np
-from crazyflie_interfaces.msg import FullStateArray, FullState
+from crazyflie_interfaces.msg import FullStateArray, FullState, LogDataGeneric
 
 import time
+import yaml
 
 from numpy import *
 import matplotlib.pyplot as plt
 import os
 amorti = True
+
+sim = True
 
 Time = []
 Func = []
@@ -28,7 +31,7 @@ goalposey = []
 ax = []
 ay = []
 
-R = 0.5
+R = 1.0
 def is_pos_def(x):
     return np.all(np.linalg.eigvals(x) >= 0)
 
@@ -633,20 +636,21 @@ def function(x, polygon):
     return graph.integral(), graph.graph_gradient(), graph.graph_hessian()
     
 
-
-
 class Algorithm(Node):
     def __init__(self):
         self.polygon = np.array([[1,1],[-1,1],[-1,-1],[1,-1]])*0.9
-        self.poses = []
-        self.oldposes = self.poses
-        self.oldtime = 0.0
         
-        self.velocities = []
-        self.oldvelocities = self.velocities
+        with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
+            config = yaml.safe_load(file)
+        self.cf_names = ([cf_name for cf_name in list(filter(lambda x: config['robots'][x]['enabled'],config['robots'].keys()))])
+        self.index_of_cf = {}
+        for i, cf_name in enumerate(self.cf_names):
+            self.index_of_cf[cf_name] = i
+        print(self.index_of_cf)
         
-        self.accelerations = np.zeros(20)
-        self.acceleration_index = 0
+        self.poses = [None] * (2 * len(self.cf_names))
+        self.velocities = [None] * (2 * len(self.cf_names))
+        self.accelerations = [None] * (2 * len(self.cf_names))
         
         super().__init__('algorithm')
         self.polygon_subscriber = self.create_subscription(
@@ -654,89 +658,92 @@ class Algorithm(Node):
             'polygon_ver',
             self.polygon_callback,
             10)
-        self.pose_subscriber = self.create_subscription(
-            TFMessage,
-            'tf',
-            self.pose_callback,
-            10)
+        
+        self.subList = {}
+        for cf_name in self.cf_names:
+            self.subList[cf_name] = self.create_subscription(
+                LogDataGeneric,
+                '/' + cf_name + '/posVelAcc',
+                lambda msg: self.pose_callback(msg, cf_name),
+                1)
+        
         self.target_publisher = self.create_publisher(FullStateArray, 'target', 10)
         self.timer = self.create_timer(0.01, self.send_cmd)
     
     def polygon_callback(self, msg):
         self.polygon = [[i.x,i.y] for i in msg.polygon.points]
         
-    def pose_callback(self, msg):
-        self.poses = np.array([[i.transform.translation.x, i.transform.translation.y] for i in msg.transforms])
-        t = msg.transforms[0].header.stamp.sec + msg.transforms[0].header.stamp.nanosec*1e-9
-        if(len(self.oldposes) != 0):
-            self.velocities = (self.poses - self.oldposes)/(t-self.oldtime)
-        if(len(self.oldvelocities) != 0):
-            self.accelerations[self.acceleration_index] = (self.velocities - self.oldvelocities)/(t-self.oldtime)
-            self.acceleration_index = (self.acceleration_index + 1)%10
-        else:
-            self.accelerations= np.zeros((10,len(self.poses),2))
-        self.oldvelocities = self.velocities
-        self.oldtime = t
-        self.oldposes = self.poses
+    def pose_callback(self, msg, cf_name):
+        # write positions
+        self.poses[self.index_of_cf[cf_name]*2] = msg.values[0]/(1 if sim else 1000)
+        self.poses[self.index_of_cf[cf_name]*2+1] = msg.values[1]/(1 if sim else 1000)
+        
+        # write velocities
+        self.velocities[self.index_of_cf[cf_name]*2] = msg.values[2]/(1 if sim else 1000)
+        self.velocities[self.index_of_cf[cf_name]*2+1] = msg.values[3]/(1 if sim else 1000)
+        
+        # write accelerations
+        self.accelerations[self.index_of_cf[cf_name]*2] = msg.values[4]/(1 if sim else 1000)
+        self.accelerations[self.index_of_cf[cf_name]*2+1] = msg.values[5]/(1 if sim else 1000)
+        print(cf_name, self.poses)
+        
     
     def send_cmd(self):
-        if(len(self.polygon) == 0 or len(self.velocities) == 0 or len(self.poses) == 0):
-            #print('cannot start algorithm if no polygon, poses or velocities are present')
+        if(None in self.poses):
             return
+    
+        print('hello')
         
         F,G,H = function(self.poses, list(reversed(self.polygon)))
         factor = 1.0 #0.5
         G *= factor
         H *= factor
-        if(len(self.accelerations) != 0):
+        # logging
+        if(True):
             Func.append(F)
             Time.append(self.get_clock().now().nanoseconds*1e-9)
-            x.append(self.poses[0][0])
-            y.append(self.poses[0][1])
-            dx.append(self.velocities[0][0])
-            dy.append(self.velocities[0][1])
+            x.append(self.poses[0])
+            y.append(self.poses[1])
+            dx.append(self.velocities[0])
+            dy.append(self.velocities[1])
             Cx.append(G[0])
             Cy.append(G[1])
             goalposex.append(self.polygon[0][0]-0.9)
             goalposey.append(self.polygon[0][1]-0.9)
-            ax.append(np.mean(self.accelerations, axis=0)[0][0])
-            ay.append(np.mean(self.accelerations, axis=0)[0][1])
-            
-        G = G.reshape((-1,2))
-        
-        points = np.array(self.poses).reshape((-1,2))
-        speeds = G
-        acc = -H@(self.velocities.reshape(-1))
-        acc = acc.reshape((-1,2))
+            ax.append(self.accelerations[0])
+            ay.append(self.accelerations[1])
+
+        Vref = G
+        Aref = -H@(self.velocities)
         
         target_msg = FullStateArray()
-        for i in range(len(points)):
-            point = points[i]
-            speed = speeds[i]
-            acceleration = acc[i]
+        for i in range(len(self.cf_names)):
+            vref = Vref[2*i:2*i+2]
+            vmes = self.velocities[2*i:2*i+2]
+            aref = Aref[2*i:2*i+2]
             
             target_msg.fullstates.append(FullState())
+            target_msg.fullstates[-1].header.frame_id = self.cf_names[i]
             
-            target_msg.fullstates[-1].pose.position.x = 100.0 if(self.oldtime > 5.0 and self.oldtime < 7.0) else point[0]
-            target_msg.fullstates[-1].pose.position.y = point[1]
+            target_msg.fullstates[-1].pose.position.x = 10.0
+            target_msg.fullstates[-1].pose.position.y = 10.0
             target_msg.fullstates[-1].pose.position.z = 0.5
-            
-            
+                        
             target_msg.fullstates[-1].twist.linear.x = 0.0
             target_msg.fullstates[-1].twist.linear.y = 0.0
             target_msg.fullstates[-1].twist.linear.z = 0.0
-            speed = G[i]
-            Gain = 0.72
-
-            kp = 1.78
             
-            target_msg.fullstates[-1].acc.x = 0.5 if(self.oldtime > 5.0 and self.oldtime < 7.0) else 0.0 # float(acceleration[0]/Gain +  kp*(speed[0] - self.velocities[i][0]))
-            target_msg.fullstates[-1].acc.y = 0.0 # float(acceleration[1]/Gain +  kp*(speed[1] - self.velocities[i][1]))
+            Gain = 0.72
+            kp = 1.78
+                        
+            target_msg.fullstates[-1].acc.x = float(aref[0]/Gain +  kp*(vref[0] - vmes[0]))
+            target_msg.fullstates[-1].acc.y = float(aref[1]/Gain +  kp*(vref[1] - vmes[1]))
             target_msg.fullstates[-1].acc.z = 0.0
             
         self.target_publisher.publish(target_msg)
 
 def main(args=None):
+    sim = True
     try:
         rclpy.init(args=args)
 
