@@ -7,6 +7,7 @@ from geometry_msgs.msg import PolygonStamped, PoseArray, Pose
 from tf2_msgs.msg import TFMessage
 import numpy as np
 from crazyflie_interfaces.msg import FullStateArray, FullState, LogDataGeneric
+from copy import deepcopy 
 
 import time
 import yaml
@@ -15,8 +16,6 @@ from numpy import *
 import matplotlib.pyplot as plt
 import os
 amorti = True
-
-sim = True
 
 Time = []
 Func = []
@@ -31,9 +30,14 @@ goalposey = []
 ax = []
 ay = []
 
+data = []
+
 R = 1.0
 def is_pos_def(x):
     return np.all(np.linalg.eigvals(x) >= 0)
+
+def diag_blocks(n):
+    return np.eye(2*n) + np.diag([i%2 for i in range(1,2*n)], k =1) + np.diag([i%2 for i in range(1,2*n)], k =-1)
 
 Rpi2 = np.array([[0,-1],[1,0]])
 
@@ -186,7 +190,6 @@ class Segment():
             # dx = diff(x)
             # dy = diff(y)
             # integral += (dx@y[1:] - dy@x[1:])/2
-            # print((dx@y[1:] - dy@x[1:])/2, ' = ', (AA[1]*BB[0] - AA[0]*BB[1])/2)
             integral += (AA[1]*BB[0] - AA[0]*BB[1])/2
             
         return integral
@@ -638,7 +641,7 @@ def function(x, polygon):
 
 class Algorithm(Node):
     def __init__(self):
-        self.polygon = np.array([[1,1],[-1,1],[-1,-1],[1,-1]])*0.9
+        self.polygon = None
         
         with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
             config = yaml.safe_load(file)
@@ -646,7 +649,6 @@ class Algorithm(Node):
         self.index_of_cf = {}
         for i, cf_name in enumerate(self.cf_names):
             self.index_of_cf[cf_name] = i
-        print(self.index_of_cf)
         
         self.poses = [None] * (2 * len(self.cf_names))
         self.velocities = [None] * (2 * len(self.cf_names))
@@ -658,46 +660,44 @@ class Algorithm(Node):
             'polygon_ver',
             self.polygon_callback,
             10)
-        
+
         self.subList = {}
         for cf_name in self.cf_names:
             self.subList[cf_name] = self.create_subscription(
                 LogDataGeneric,
                 '/' + cf_name + '/posVelAcc',
-                lambda msg: self.pose_callback(msg, cf_name),
-                1)
+                lambda msg, n=cf_name: self.pose_callback(msg, n),
+                10)
         
         self.target_publisher = self.create_publisher(FullStateArray, 'target', 10)
         self.timer = self.create_timer(0.01, self.send_cmd)
     
     def polygon_callback(self, msg):
         self.polygon = [[i.x,i.y] for i in msg.polygon.points]
-        
-    def pose_callback(self, msg, cf_name):
+    
+    def pose_callback(self, msg, NAME):
         # write positions
-        self.poses[self.index_of_cf[cf_name]*2] = msg.values[0]/(1 if sim else 1000)
-        self.poses[self.index_of_cf[cf_name]*2+1] = msg.values[1]/(1 if sim else 1000)
+        self.poses[self.index_of_cf[NAME]*2] = msg.values[0]/1000
+        self.poses[self.index_of_cf[NAME]*2+1] = msg.values[1]/1000
         
         # write velocities
-        self.velocities[self.index_of_cf[cf_name]*2] = msg.values[2]/(1 if sim else 1000)
-        self.velocities[self.index_of_cf[cf_name]*2+1] = msg.values[3]/(1 if sim else 1000)
+        self.velocities[self.index_of_cf[NAME]*2] = msg.values[2]/1000
+        self.velocities[self.index_of_cf[NAME]*2+1] = msg.values[3]/1000
         
         # write accelerations
-        self.accelerations[self.index_of_cf[cf_name]*2] = msg.values[4]/(1 if sim else 1000)
-        self.accelerations[self.index_of_cf[cf_name]*2+1] = msg.values[5]/(1 if sim else 1000)
-        print(cf_name, self.poses)
-        
+        self.accelerations[self.index_of_cf[NAME]*2] = msg.values[4]/1000
+        self.accelerations[self.index_of_cf[NAME]*2+1] = msg.values[5]/1000
     
     def send_cmd(self):
-        if(None in self.poses):
+        if(None in self.poses or self.polygon == None):
             return
     
-        print('hello')
         
         F,G,H = function(self.poses, list(reversed(self.polygon)))
-        factor = 1.0 #0.5
+        factor = 1/(2*R)
         G *= factor
-        H *= factor
+        H *= factor*diag_blocks(len(self.cf_names))
+        
         # logging
         if(True):
             Func.append(F)
@@ -712,6 +712,8 @@ class Algorithm(Node):
             goalposey.append(self.polygon[0][1]-0.9)
             ax.append(self.accelerations[0])
             ay.append(self.accelerations[1])
+            
+            data.append([self.get_clock().now().nanoseconds*1e-9, F] + self.poses)
 
         Vref = G
         Aref = -H@(self.velocities)
@@ -736,14 +738,15 @@ class Algorithm(Node):
             Gain = 0.72
             kp = 1.78
                         
-            target_msg.fullstates[-1].acc.x = float(aref[0]/Gain +  kp*(vref[0] - vmes[0]))
-            target_msg.fullstates[-1].acc.y = float(aref[1]/Gain +  kp*(vref[1] - vmes[1]))
+            target_msg.fullstates[-1].acc.x = np.clip(float(aref[0]/Gain +  kp*(vref[0] - vmes[0])), -1.0,1.0)
+            target_msg.fullstates[-1].acc.y = np.clip(float(aref[1]/Gain +  kp*(vref[1] - vmes[1])), -1.0,1.0)
             target_msg.fullstates[-1].acc.z = 0.0
-            
+        
         self.target_publisher.publish(target_msg)
 
+        
+            
 def main(args=None):
-    sim = True
     try:
         rclpy.init(args=args)
 
@@ -753,12 +756,13 @@ def main(args=None):
 
         algorithm.destroy_node()
         rclpy.shutdown()
-    except KeyboardInterrupt:        
+    except KeyboardInterrupt:
         TIME = time.localtime()
         TIME = str(TIME.tm_year) + "_" + str(TIME.tm_mon) + "_" + str(TIME.tm_mday) + "_" + str(TIME.tm_hour) + "h" + str(TIME.tm_min) + "m" + str(TIME.tm_sec) + "s"
         path = os.path.join("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results", TIME) 
         os.mkdir(path)
-        np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay]).T)
-    
+        #np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay]).T)
+        np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array(data))
+      
 if __name__ == '__main__':
     main()

@@ -5,6 +5,7 @@ import sys
 from geometry_msgs.msg import Point32,Polygon,PolygonStamped
 import numpy as np
 
+import yaml
 
 def distance(point1, point2):
     return ((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)**0.5
@@ -25,13 +26,20 @@ class Polygon_publisher(Node):
             self.positions_update,
             1)
         self.i = 0
-        self.poses = []
+        with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
+            config = yaml.safe_load(file)
+        self.cf_names = ([cf_name for cf_name in list(filter(lambda x: config['robots'][x]['enabled'],config['robots'].keys()))])
+        self.index_of_cf = {}
+        for i, cf_name in enumerate(self.cf_names):
+            self.index_of_cf[cf_name] = i
+        
+        self.poses = [[0,0]] * (len(self.cf_names))
         
         pygame.init()
         self.M,self.N = 1000,1000
         self.ecran = pygame.display.set_mode((self.M, self.N))
         self.font = pygame.font.SysFont(None, 20)  # Create a font object for displaying text
-        self.points = np.array([[90, -90], [-90, -90], [-90, 90], [90, 90]])*2 #[[1,1],[-1,1],[-1,-1],[1,-1]]
+        self.points = np.array([[1, -1], [-1, -1], [-1, 1], [1, 1]])*100
         for i in range(len(self.points)):
             self.points[i] = (self.points[i][0] + self.M//2, self.points[i][1] + self.N//2)
         self.couleur_polygone = (0, 255, 0, 128)
@@ -40,6 +48,7 @@ class Polygon_publisher(Node):
         self.point_selectionne = None
         self.polygone_selectionne = False
         self.i = 0
+        
 
     
     def polygon_window(self):
@@ -82,7 +91,7 @@ class Polygon_publisher(Node):
             pygame.draw.line(self.ecran, (0, 0, 255), (self.M/2, 0), (self.M//2, self.N), 2)  # Axe y (bleu)
             
             for pose in self.poses:
-                pygame.draw.circle(self.ecran, (0, 0, 255), (pose.transform.translation.x*100 + self.M//2,-pose.transform.translation.y*100+self.N//2), 100)
+                pygame.draw.circle(self.ecran, (0, 0, 255), (pose[0]*100 + self.M//2,-pose[1]*100+self.N//2), 100)
             
             pygame.draw.polygon(self.ecran, self.couleur_polygone, self.points, width = 10)
 
@@ -108,7 +117,8 @@ class Polygon_publisher(Node):
         
     
     def positions_update(self, msg):
-        self.poses = msg.transforms
+        for transform in msg.transforms:
+            self.poses[self.index_of_cf[transform.child_frame_id]] = [transform.transform.translation.x,transform.transform.translation.y]
         self.polygon_window()
         self.i += 1
     

@@ -187,7 +187,6 @@ def generate_launch_description():
             parameters=[{
                 "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
             }],
-            condition=LaunchConfigurationEquals('backend', 'sim')
         ),
         Node(
             package='crazyflie',

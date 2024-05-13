@@ -17,29 +17,26 @@ class Target_executor(Node):
         super().__init__('target_executor')
         self.swarm.allcfs.takeoff(targetHeight=0.5, duration= (1.0 if sim else 4.0))
         self.timeHelper.sleep((1.0 if sim else 5.0))
-        print('start sending acc')
-        self.timer = self.create_timer(0.01, self.send_acc)
+        
     
-        # Création d'un abonné pour écouter les positions
-        # self.target_sub = self.create_subscription(
-        #     FullStateArray,
-        #     'target',
-        #     self.cmd_callback,
-        #     10)
+        self.target_sub = self.create_subscription(
+            FullStateArray,
+            'target',
+            self.cmd_callback,
+            10)
         self.i = 0.0
 
     def send_acc(self):
         cf = self.swarm.allcfs.crazyflies[0]
         acc = 1.0
         print("sending acc")
-        #self.position(cf,[10.0,0.0,0.5],[0.0,0.0,0.0],[acc, 0.0,0.0])
-        self.position(cf,[np.cos(self.i),np.sin(self.i),0.5],[0.0,0.0,0.0],[acc, 0.0,0.0])
-        cf = self.swarm.allcfs.crazyflies[1]
-        acc = 1.0
-        print("sending acc")
-        #self.position(cf,[10.0,0.0,0.5],[0.0,0.0,0.0],[acc, 0.0,0.0])
-        self.position(cf,[np.cos(self.i),-np.sin(self.i),0.5],[0.0,0.0,0.0],[acc, 0.0,0.0])
-        self.i += 0.001
+        self.i += 0.01
+        self.position(cf,[10.0,0.0,0.5],[0.0,0.0,0.0],[acc, 0.0,0.0])
+        
+        if(self.i > 3.0):
+            cf.land(targetHeight=0.04, duration=2.5)
+            self.timeHelper.sleep(3.0)
+            self.i = 1/0.0
     
     def cmd_callback(self, msg):
         positions = [[i.pose.position.x, i.pose.position.y, i.pose.position.z] for i in msg.fullstates]

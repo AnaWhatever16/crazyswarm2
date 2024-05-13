@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-folder_name = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_4_11h59m16s'
+folder_name = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_6_16h6m51s'
 
 amorti = np.loadtxt(folder_name + '/amorti.txt').T
 
@@ -14,7 +14,7 @@ plt.legend()
 plt.savefig(folder_name + "/coverage.pdf")
 
 # First create some toy data:
-t_am = amorti[0]
+t_am = amorti[0] - amorti[0][0]
 x_am = amorti[2]
 y_am = amorti[3]
 goalposex_am = amorti[4]
@@ -40,7 +40,7 @@ ax2.set_ylabel('y [m]')
 
 ax3.set_xlabel('x [m]')
 ax3.set_ylabel('y [m]')
-
+ax3.axis('equal')
 ax1.legend()
 ax2.legend()
 ax3.legend()

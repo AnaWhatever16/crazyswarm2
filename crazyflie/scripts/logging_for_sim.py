@@ -55,20 +55,20 @@ class Logging_for_sim(Node):
                 msg.header.frame_id = cf_name
                 msg.values = [0.0]*6
                 # xy positions
-                msg.values[0] = posesList[2][1]
-                msg.values[1] = posesList[2][2]
+                msg.values[0] = posesList[2][1]*1000
+                msg.values[1] = posesList[2][2]*1000
                 # xy speeds
                 speeds21 = posesList[2] - posesList[1]
                 speeds21 = speeds21[1:3]/speeds21[0]
-                msg.values[2] = speeds21[0]
-                msg.values[3] = speeds21[1]
+                msg.values[2] = speeds21[0]*1000
+                msg.values[3] = speeds21[1]*1000
                 
                 # xy accelerations
                 speeds10 = posesList[1] - posesList[0]
                 speeds10 = speeds10[1:3]/speeds10[0]
                 accs = 0.5*(speeds21 - speeds10)/(posesList[2][0] - posesList[0][0])
-                msg.values[4] = accs[0]
-                msg.values[5] = accs[1]
+                msg.values[4] = accs[0]*1000
+                msg.values[5] = accs[1]*1000
                 self.pubList[cf_name].publish(msg)
     
 def main(args=None):
