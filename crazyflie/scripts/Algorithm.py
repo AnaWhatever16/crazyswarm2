@@ -30,6 +30,9 @@ goalposey = []
 ax = []
 ay = []
 
+acc_x = []
+acc_y = []
+
 data = []
 
 R = 1.0
@@ -612,7 +615,6 @@ class Graph():
                     
         return H/2
 
-
 def plot(x):
     graph = Graph()
     graph.polygon(array([[-1,-1],[-1,1],[1,1],[1,-1]]))
@@ -650,6 +652,7 @@ class Algorithm(Node):
         for i, cf_name in enumerate(self.cf_names):
             self.index_of_cf[cf_name] = i
         
+        self.startTime = self.get_clock().now().nanoseconds*1e-9
         self.poses = [None] * (2 * len(self.cf_names))
         self.velocities = [None] * (2 * len(self.cf_names))
         self.accelerations = [None] * (2 * len(self.cf_names))
@@ -671,6 +674,7 @@ class Algorithm(Node):
         
         self.target_publisher = self.create_publisher(FullStateArray, 'target', 10)
         self.timer = self.create_timer(0.01, self.send_cmd)
+        
     
     def polygon_callback(self, msg):
         self.polygon = [[i.x,i.y] for i in msg.polygon.points]
@@ -701,7 +705,7 @@ class Algorithm(Node):
         # logging
         if(True):
             Func.append(F)
-            Time.append(self.get_clock().now().nanoseconds*1e-9)
+            Time.append(self.get_clock().now().nanoseconds*1e-9 - self.startTime)
             x.append(self.poses[0])
             y.append(self.poses[1])
             dx.append(self.velocities[0])
@@ -735,12 +739,17 @@ class Algorithm(Node):
             target_msg.fullstates[-1].twist.linear.y = 0.0
             target_msg.fullstates[-1].twist.linear.z = 0.0
             
+            vref = (0.3-np.array([self.poses[0], self.poses[1]]))*2
+            
             Gain = 0.72
             kp = 1.78
                         
-            target_msg.fullstates[-1].acc.x = np.clip(float(aref[0]/Gain +  kp*(vref[0] - vmes[0])), -1.0,1.0)
-            target_msg.fullstates[-1].acc.y = np.clip(float(aref[1]/Gain +  kp*(vref[1] - vmes[1])), -1.0,1.0)
+            target_msg.fullstates[-1].acc.x = np.clip(float(0*aref[0]/Gain +  kp*(vref[0] - vmes[0])), -2.0,2.0) - 0.435
+            target_msg.fullstates[-1].acc.y = np.clip(float(0*aref[1]/Gain +  kp*(vref[1] - vmes[1])), -2.0,2.0) - 0.926
             target_msg.fullstates[-1].acc.z = 0.0
+            
+            acc_x.append(target_msg.fullstates[-1].acc.x)
+            acc_y.append(target_msg.fullstates[-1].acc.y)
         
         self.target_publisher.publish(target_msg)
 
@@ -761,8 +770,9 @@ def main(args=None):
         TIME = str(TIME.tm_year) + "_" + str(TIME.tm_mon) + "_" + str(TIME.tm_mday) + "_" + str(TIME.tm_hour) + "h" + str(TIME.tm_min) + "m" + str(TIME.tm_sec) + "s"
         path = os.path.join("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results", TIME) 
         os.mkdir(path)
-        #np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay]).T)
+        np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti_old.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay, acc_x, acc_y]).T)
         np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array(data))
+
       
 if __name__ == '__main__':
     main()

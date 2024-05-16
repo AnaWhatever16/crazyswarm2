@@ -7,10 +7,10 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 
-from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
 
 from motion_capture_tracking_interfaces.msg import NamedPoseArray, NamedPose
+import numpy as np
 
 
 class VRPN_to_poses(Node):
@@ -38,11 +38,13 @@ class VRPN_to_poses(Node):
         self.pose0 = NamedPose()
         self.pose0.name = 'cf0000'
         self.pose0.pose = msg.pose
+
     
     def func1(self,msg):
         self.pose1 = NamedPose()
         self.pose1.name = 'cf1111'
         self.pose1.pose = msg.pose
+        
         
     def func2(self,msg):
         self.pose2 = NamedPose()
