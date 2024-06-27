@@ -23,7 +23,7 @@ class Logging_for_sim(Node):
             10)
         
         # open config file and extract active cf_names
-        with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
+        with open('/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
             config = yaml.safe_load(file)
         self.cf_names = ([cf_name for cf_name in list(filter(lambda x: config['robots'][x]['enabled'],config['robots'].keys()))])
         self.posesLists = {}

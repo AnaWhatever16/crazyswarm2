@@ -645,7 +645,7 @@ class Algorithm(Node):
     def __init__(self):
         self.polygon = None
         
-        with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
+        with open('/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
             config = yaml.safe_load(file)
         self.cf_names = ([cf_name for cf_name in list(filter(lambda x: config['robots'][x]['enabled'],config['robots'].keys()))])
         self.index_of_cf = {}
@@ -768,7 +768,7 @@ def main(args=None):
     except KeyboardInterrupt:
         TIME = time.localtime()
         TIME = str(TIME.tm_year) + "_" + str(TIME.tm_mon) + "_" + str(TIME.tm_mday) + "_" + str(TIME.tm_hour) + "h" + str(TIME.tm_min) + "m" + str(TIME.tm_sec) + "s"
-        path = os.path.join("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results", TIME) 
+        path = os.path.join("/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/results", TIME) 
         os.mkdir(path)
         np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti_old.txt'),array([Time,Func,x,y,goalposex,goalposey,dx,dy, Cx, Cy, ax, ay, acc_x, acc_y]).T)
         np.savetxt(os.path.join(path,('' if amorti else 'non_') + 'amorti.txt'),array(data))

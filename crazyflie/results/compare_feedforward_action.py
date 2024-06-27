@@ -2,8 +2,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-folder_name1 = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_2_16h6m0s'
-folder_name2 = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_2_16h9m39s'
+folder_name1 = '/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/results/2024_5_2_16h6m0s'
+folder_name2 = '/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/results/2024_5_2_16h9m39s'
 
 normal = np.loadtxt(folder_name1 + '/amorti.txt').T
 feedfwd = np.loadtxt(folder_name2 + '/amorti.txt').T

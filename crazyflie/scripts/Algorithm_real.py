@@ -68,7 +68,7 @@ def main(args=None):
     except KeyboardInterrupt:        
         TIME = time.localtime()
         TIME = str(TIME.tm_year) + "_" + str(TIME.tm_mon) + "_" + str(TIME.tm_mday) + "_" + str(TIME.tm_hour) + "h" + str(TIME.tm_min) + "m" + str(TIME.tm_sec) + "s"
-        path = os.path.join("/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results", TIME) 
+        path = os.path.join("/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/results", TIME) 
         os.mkdir(path)
         np.savetxt(os.path.join(path,'amorti.txt'),array(data)/1000)
     

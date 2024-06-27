@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-folder_name = '/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/results/2024_5_16_10h33m58s'
+folder_name = '/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/results/2024_5_16_10h33m58s'
 
 amorti = np.loadtxt(folder_name + '/amorti_old.txt').T
 

@@ -26,7 +26,7 @@ class Polygon_publisher(Node):
             self.positions_update,
             1)
         self.i = 0
-        with open('/home/matthieu/ros2_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
+        with open('/coverage_crazyflie_ws/src/crazyswarm2/crazyflie/config/crazyflies.yaml', 'r') as file:
             config = yaml.safe_load(file)
         self.cf_names = ([cf_name for cf_name in list(filter(lambda x: config['robots'][x]['enabled'],config['robots'].keys()))])
         self.index_of_cf = {}
